@@ -13,7 +13,7 @@
       align-items: center;
       justify-content: center;
       height: 100vh;
-      touch-action: manipulation; /* Prevent double-tap zoom and other touch defaults */
+      touch-action: manipulation; /* Disable double-tap zoom and other touch defaults */
     }
     canvas {
       background: #000;
@@ -46,7 +46,7 @@
     @media (max-width: 600px) {
       canvas {
         width: 100vw;
-        height: 100vw;
+        height: 200vw;
       }
     }
   </style>
