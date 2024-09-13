@@ -234,7 +234,8 @@
   }
 
   function maybeSpawnMoreObstacles() {
-    if (score % 10 === 0 && score > 0) {
+    const obstacleCount = Math.floor(score / 10); // 1 obstacle for first 10, 2 for next, etc.
+    while (obstacles.length < obstacleCount) {
       spawnObstacle();
     }
   }
