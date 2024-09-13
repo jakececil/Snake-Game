@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> <!-- Disable zoom on mobile -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> <!-- Prevent double-tap zoom -->
   <title>Rainbow Worm</title>
   <style>
     body {
@@ -13,7 +13,7 @@
       align-items: center;
       justify-content: center;
       height: 100vh;
-      touch-action: manipulation; /* Disable double-tap zoom */
+      touch-action: manipulation; /* Prevent double-tap zoom and other touch defaults */
     }
     canvas {
       background: #000;
