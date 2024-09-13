@@ -96,6 +96,26 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
+    // Game variables
+    let gridSize;
+    let snake;
+    let food;
+    let direction;
+    let changingDirection;
+    let score;
+    let steps;
+    let countdown;
+    let gameOverFlag = false;
+    let lastRenderTime = 0;
+    const gameSpeed = 10; // Adjust the game speed (higher is faster)
+
+    const directions = {
+      0: { dx: 1, dy: 0 },     // Right
+      90: { dx: 0, dy: -1 },   // Up
+      180: { dx: -1, dy: 0 },  // Left
+      270: { dx: 0, dy: 1 }    // Down
+    };
+
     // Adjust canvas size to fit the screen width
     function resizeCanvas() {
       const screenWidth = window.innerWidth;
@@ -106,28 +126,10 @@
       gridSize = canvas.width / 15; // Keep 15 cells per row/column
     }
     window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    let gridSize;
-    let snake;
-    let food;
-    let direction;
-    let changingDirection;
-    let score;
-    let steps;
-    let countdown;
-    let gameLoopInterval;
-    let gameOverFlag = false;
-
-    const directions = {
-      0: { dx: 1, dy: 0 },     // Right
-      90: { dx: 0, dy: -1 },   // Up
-      180: { dx: -1, dy: 0 },  // Left
-      270: { dx: 0, dy: 1 }    // Down
-    };
 
     // Initialize the game variables
     function init() {
+      resizeCanvas();
       snake = [{ x: 7 * gridSize, y: 7 * gridSize }];
       food = {};
       direction = 0; // Angle in degrees
@@ -136,10 +138,11 @@
       steps = 0; // Tracks the number of steps for color cycling
       countdown = 3; // 3-second countdown before the game starts
       gameOverFlag = false;
+      lastRenderTime = 0;
       updateScore();
       createFood();
-      clearInterval(gameLoopInterval);
-      gameLoopInterval = setInterval(main, 50); // 20 FPS
+      hideGameOverScreen();
+      window.requestAnimationFrame(main);
     }
 
     // Function to return a color based on step progression through color wheel
@@ -154,8 +157,13 @@
       return `hsl(${hue}, 100%, 50%)`;
     }
 
-    function main() {
+    function main(currentTime) {
       if (gameOverFlag) return;
+
+      window.requestAnimationFrame(main);
+      const secondsSinceLastRender = (currentTime - lastRenderTime) / 1000;
+      if (secondsSinceLastRender < 1 / gameSpeed) return;
+      lastRenderTime = currentTime;
 
       if (countdown > 0) {
         displayCountdown();
@@ -166,7 +174,6 @@
       if (gameOver()) {
         showGameOverScreen();
         gameOverFlag = true;
-        clearInterval(gameLoopInterval);
         return;
       }
 
@@ -192,21 +199,18 @@
 
     function moveSnake() {
       const currentDirection = directions[direction % 360];
-      const moveX = currentDirection.dx * (gridSize / 4); // Move in smaller increments
-      const moveY = currentDirection.dy * (gridSize / 4);
+      const moveX = currentDirection.dx * gridSize;
+      const moveY = currentDirection.dy * gridSize;
 
       const head = { x: snake[0].x + moveX, y: snake[0].y + moveY };
-      // Round positions to avoid floating point errors
-      head.x = Math.round(head.x * 1000) / 1000;
-      head.y = Math.round(head.y * 1000) / 1000;
 
       // Add new head position
       snake.unshift(head);
 
       steps++; // Increase step count as the snake moves
 
-      // Check if the snake has reached the next grid position
-      if (Math.abs(head.x - food.x) < gridSize / 4 && Math.abs(head.y - food.y) < gridSize / 4) {
+      // Check if the snake has eaten the food
+      if (head.x === food.x && head.y === food.y) {
         score += 1;
         updateScore();
         createFood();
@@ -252,8 +256,7 @@
     function gameOver() {
       // Check collision with self
       for (let i = 4; i < snake.length; i++) {
-        if (Math.abs(snake[i].x - snake[0].x) < gridSize / 4 &&
-            Math.abs(snake[i].y - snake[0].y) < gridSize / 4) {
+        if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) {
           return true;
         }
       }
@@ -283,6 +286,7 @@
       ctx.fillStyle = '#FFFFFF';
       ctx.font = '48px Arial';
       ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
       ctx.fillText(countdown, canvas.width / 2, canvas.height / 2);
     }
 
@@ -293,10 +297,14 @@
       overlay.style.display = 'flex';
     }
 
-    // Restart the game
-    document.getElementById('restartButton').addEventListener('click', function() {
+    // Hide Game Over screen
+    function hideGameOverScreen() {
       const overlay = document.getElementById('gameOverOverlay');
       overlay.style.display = 'none';
+    }
+
+    // Restart the game
+    document.getElementById('restartButton').addEventListener('click', function() {
       init();
     });
 
