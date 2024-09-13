@@ -2,73 +2,87 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> <!-- Prevent double-tap zoom -->
+  <!-- Prevent double-tap zoom -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Rainbow Worm</title>
   <style>
-    body {
+    html, body {
       margin: 0;
+      padding: 0;
       background: #000;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      touch-action: manipulation; /* Disable double-tap zoom and other touch defaults */
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none; /* Disable touch interactions */
+      -webkit-user-select: none; /* Prevent text selection */
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none; /* Disable callout actions */
     }
-    canvas {
-      background: #000;
+    #gameContainer {
+      position: relative;
+      width: 100%;
+      height: 100%;
     }
     #score {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
       color: #FFF;
       font-size: 24px;
-      margin-bottom: 10px;
+      z-index: 10;
+    }
+    canvas {
+      display: block;
+      background: #000;
+      width: 100%;
+      height: 100%;
     }
     #controls {
       position: absolute;
-      bottom: 0;
-      width: 100vw;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       display: flex;
-      justify-content: space-between;
-      border-top: 2px solid gray; /* Gray line to divide buttons */
+      z-index: 20;
     }
     .control-zone {
       flex: 1;
-      height: 100px; /* Extend control zones down */
-      background-color: #000; /* Keep background black */
-      color: white;
-      font-size: 48px;
-      text-align: center;
-      line-height: 100px; /* Vertically center the text */
-      border: none;
-    }
-
-    /* Make canvas responsive on mobile */
-    @media (max-width: 600px) {
-      canvas {
-        width: 100vw;
-        height: 100vw;
-      }
+      height: 100%;
+      /* Uncomment below for visualizing control zones */
+      /* background-color: rgba(255, 255, 255, 0.1); */
     }
   </style>
 </head>
 <body>
-  <div id="score">Score: 0</div> <!-- Real-time score counter -->
-  <canvas id="gameCanvas" width="450" height="450"></canvas>
-  
-  <!-- Control zones for mobile, now extending fully to the bottom and more prominent -->
-  <div id="controls">
-    <div class="control-zone" id="leftButton">L</div>
-    <div class="control-zone" id="rightButton">R</div>
+  <div id="gameContainer">
+    <div id="score">Score: 0</div>
+    <canvas id="gameCanvas"></canvas>
+    <!-- Control zones covering entire left and right halves -->
+    <div id="controls">
+      <div class="control-zone" id="leftZone"></div>
+      <div class="control-zone" id="rightZone"></div>
+    </div>
   </div>
 
   <script>
+    // Canvas setup
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
+
+    // Adjust canvas size to fit container
+    function resizeCanvas() {
+      canvas.width = document.getElementById('gameContainer').clientWidth;
+      canvas.height = document.getElementById('gameContainer').clientHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
     const gridSize = 30; 
     let snake = [{ x: 150, y: 150 }];
     let food = {};
-    let dx = gridSize;
-    let dy = 0;
     let direction = 0; // Angle in degrees
     let changingDirection = false;
     let score = 0;
@@ -207,20 +221,22 @@
       countdown--;
     }
 
-    // Mobile Control Buttons
-    document.getElementById('leftButton').addEventListener('touchstart', function() {
+    // Mobile Control Zones
+    document.getElementById('leftZone').addEventListener('touchstart', function(event) {
+      event.preventDefault();
       changeDirection('left');
     });
 
-    document.getElementById('rightButton').addEventListener('touchstart', function() {
+    document.getElementById('rightZone').addEventListener('touchstart', function(event) {
+      event.preventDefault();
       changeDirection('right');
     });
 
     // Keyboard Controls for Desktop
     document.addEventListener('keydown', function(event) {
-      if (event.keyCode === 37) { // Left arrow key
+      if (event.key === 'ArrowLeft') { // Left arrow key
         changeDirection('left');
-      } else if (event.keyCode === 39) { // Right arrow key
+      } else if (event.key === 'ArrowRight') { // Right arrow key
         changeDirection('right');
       }
     });
