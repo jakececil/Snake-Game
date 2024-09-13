@@ -1,194 +1,178 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE html>
 <html>
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2487.5">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  <meta charset="UTF-8">
+  <title>Snake Game</title>
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    canvas {
+      background: #000;
+    }
+    #controls {
+      margin-top: 10px;
+    }
+    #controls button {
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+      margin: 5px;
+    }
+    #controls .control-row {
+      display: flex;
+      justify-content: center;
+    }
   </style>
 </head>
 <body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta charset="UTF-8"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;title&gt;Snake Game&lt;/title&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;style&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>body {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin: 0;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: #000;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>flex-direction: column;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>canvas {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: #000;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#controls {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin-top: 10px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#controls button {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width: 60px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>height: 60px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-size: 24px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin: 5px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#controls .control-row {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>justify-content: center;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/style&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;canvas id="gameCanvas" width="300" height="300"&gt;&lt;/canvas&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div id="controls"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="control-row"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;button id="upButton"&gt;▲&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="control-row"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;button id="leftButton"&gt;◄&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;button id="downButton"&gt;▼&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;button id="rightButton"&gt;►&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const canvas = document.getElementById('gameCanvas');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const ctx = canvas.getContext('2d');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const gridSize = 15;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let snake = [{ x: 150, y: 150 }];</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let food = {};</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let dx = gridSize;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let dy = 0;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let changingDirection = false;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>let score = 0;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function main() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (gameOver()) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>alert('Game Over! Your score was ' + score);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>document.location.reload();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>return;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">      </span>changingDirection = false;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>setTimeout(function onTick() {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>clearCanvas();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>drawFood();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>moveSnake();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>drawSnake();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>main();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}, 100);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function clearCanvas() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>ctx.fillStyle = '#000';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>ctx.fillRect(0, 0, canvas.width, canvas.height);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function drawSnake() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>ctx.fillStyle = '#00FF00';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>snake.forEach(function(part) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillRect(part.x, part.y, gridSize, gridSize);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>});</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function moveSnake() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const head = { x: snake[0].x + dx, y: snake[0].y + dy };</p>
-<p class="p1"><span class="Apple-converted-space">      </span>snake.unshift(head);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (head.x === food.x &amp;&amp; head.y === food.y) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>score += 10;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>createFood();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>snake.pop();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function changeDirection(direction) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (changingDirection) return;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>changingDirection = true;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>const goingUp = dy === -gridSize;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const goingDown = dy === gridSize;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const goingRight = dx === gridSize;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const goingLeft = dx === -gridSize;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (direction === 'left' &amp;&amp; !goingRight) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>dx = -gridSize;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>dy = 0;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (direction === 'up' &amp;&amp; !goingDown) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>dx = 0;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>dy = -gridSize;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (direction === 'right' &amp;&amp; !goingLeft) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>dx = gridSize;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>dy = 0;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (direction === 'down' &amp;&amp; !goingUp) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>dx = 0;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>dy = gridSize;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function createFood() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>food.x = Math.floor(Math.random() * (canvas.width / gridSize)) * gridSize;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>food.y = Math.floor(Math.random() * (canvas.height / gridSize)) * gridSize;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>snake.forEach(function(part) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (part.x === food.x &amp;&amp; part.y === food.y) {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>createFood();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">      </span>});</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function drawFood() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>ctx.fillStyle = '#FF0000';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>ctx.fillRect(food.x, food.y, gridSize, gridSize);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function gameOver() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>for (let i = 4; i &lt; snake.length; i++) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (snake[i].x === snake[0].x &amp;&amp; snake[i].y === snake[0].y) return true;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const hitLeftWall = snake[0].x &lt; 0;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const hitRightWall = snake[0].x &gt;= canvas.width;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const hitTopWall = snake[0].y &lt; 0;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const hitBottomWall = snake[0].y &gt;= canvas.height;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>return hitLeftWall || hitRightWall || hitTopWall || hitBottomWall;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// Touch Controls for Mobile</p>
-<p class="p1"><span class="Apple-converted-space">    </span>document.getElementById('leftButton').addEventListener('click', function() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>changeDirection('left');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>});</p>
-<p class="p1"><span class="Apple-converted-space">    </span>document.getElementById('upButton').addEventListener('click', function() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>changeDirection('up');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>});</p>
-<p class="p1"><span class="Apple-converted-space">    </span>document.getElementById('downButton').addEventListener('click', function() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>changeDirection('down');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>});</p>
-<p class="p1"><span class="Apple-converted-space">    </span>document.getElementById('rightButton').addEventListener('click', function() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>changeDirection('right');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// Keyboard Controls for Desktop</p>
-<p class="p1"><span class="Apple-converted-space">    </span>document.addEventListener('keydown', function(event) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const keyMap = {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>37: 'left',</p>
-<p class="p1"><span class="Apple-converted-space">        </span>38: 'up',</p>
-<p class="p1"><span class="Apple-converted-space">        </span>39: 'right',</p>
-<p class="p1"><span class="Apple-converted-space">        </span>40: 'down'</p>
-<p class="p1"><span class="Apple-converted-space">      </span>};</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (keyMap[event.keyCode]) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>changeDirection(keyMap[event.keyCode]);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>createFood();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>main();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/script&gt;</p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+  <canvas id="gameCanvas" width="300" height="300"></canvas>
+  <div id="controls">
+    <div class="control-row">
+      <button id="upButton">▲</button>
+    </div>
+    <div class="control-row">
+      <button id="leftButton">◄</button>
+      <button id="downButton">▼</button>
+      <button id="rightButton">►</button>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const gridSize = 15;
+    let snake = [{ x: 150, y: 150 }];
+    let food = {};
+    let dx = gridSize;
+    let dy = 0;
+    let changingDirection = false;
+    let score = 0;
+
+    function main() {
+      if (gameOver()) {
+        alert('Game Over! Your score was ' + score);
+        document.location.reload();
+        return;
+      }
+      changingDirection = false;
+      setTimeout(function onTick() {
+        clearCanvas();
+        drawFood();
+        moveSnake();
+        drawSnake();
+        main();
+      }, 100);
+    }
+
+    function clearCanvas() {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function drawSnake() {
+      ctx.fillStyle = '#00FF00';
+      snake.forEach(function(part) {
+        ctx.fillRect(part.x, part.y, gridSize, gridSize);
+      });
+    }
+
+    function moveSnake() {
+      const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+      snake.unshift(head);
+      if (head.x === food.x && head.y === food.y) {
+        score += 10;
+        createFood();
+      } else {
+        snake.pop();
+      }
+    }
+
+    function changeDirection(direction) {
+      if (changingDirection) return;
+      changingDirection = true;
+
+      const goingUp = dy === -gridSize;
+      const goingDown = dy === gridSize;
+      const goingRight = dx === gridSize;
+      const goingLeft = dx === -gridSize;
+
+      if (direction === 'left' && !goingRight) {
+        dx = -gridSize;
+        dy = 0;
+      }
+      if (direction === 'up' && !goingDown) {
+        dx = 0;
+        dy = -gridSize;
+      }
+      if (direction === 'right' && !goingLeft) {
+        dx = gridSize;
+        dy = 0;
+      }
+      if (direction === 'down' && !goingUp) {
+        dx = 0;
+        dy = gridSize;
+      }
+    }
+
+    function createFood() {
+      food.x = Math.floor(Math.random() * (canvas.width / gridSize)) * gridSize;
+      food.y = Math.floor(Math.random() * (canvas.height / gridSize)) * gridSize;
+      snake.forEach(function(part) {
+        if (part.x === food.x && part.y === food.y) {
+          createFood();
+        }
+      });
+    }
+
+    function drawFood() {
+      ctx.fillStyle = '#FF0000';
+      ctx.fillRect(food.x, food.y, gridSize, gridSize);
+    }
+
+    function gameOver() {
+      for (let i = 4; i < snake.length; i++) {
+        if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) return true;
+      }
+      const hitLeftWall = snake[0].x < 0;
+      const hitRightWall = snake[0].x >= canvas.width;
+      const hitTopWall = snake[0].y < 0;
+      const hitBottomWall = snake[0].y >= canvas.height;
+      return hitLeftWall || hitRightWall || hitTopWall || hitBottomWall;
+    }
+
+    // Touch Controls for Mobile
+    document.getElementById('leftButton').addEventListener('click', function() {
+      changeDirection('left');
+    });
+    document.getElementById('upButton').addEventListener('click', function() {
+      changeDirection('up');
+    });
+    document.getElementById('downButton').addEventListener('click', function() {
+      changeDirection('down');
+    });
+    document.getElementById('rightButton').addEventListener('click', function() {
+      changeDirection('right');
+    });
+
+    // Keyboard Controls for Desktop
+    document.addEventListener('keydown', function(event) {
+      const keyMap = {
+        37: 'left',
+        38: 'up',
+        39: 'right',
+        40: 'down'
+      };
+      if (keyMap[event.keyCode]) {
+        changeDirection(keyMap[event.keyCode]);
+      }
+    });
+
+    createFood();
+    main();
+  </script>
 </body>
 </html>
