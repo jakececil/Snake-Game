@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Rainbow Worm Game</title>
   <style>
     body {
@@ -22,7 +22,6 @@
     canvas {
       background-color: black;
       display: block;
-      border: 2px solid white; /* Add a clear white border for visibility */
     }
     #score {
       position: absolute;
@@ -181,8 +180,8 @@
 
   function createFood() {
     food = {
-      x: Math.floor(Math.random() * 20) * gridSize,
-      y: Math.floor(Math.random() * 20) * gridSize
+      x: Math.floor(Math.random() * 18 + 1) * gridSize,  // Keeps it a bit away from edges
+      y: Math.floor(Math.random() * 18 + 1) * gridSize
     };
     snake.forEach(part => {
       if (part.x === food.x && part.y === food.y) createFood();  // Ensure no food on snake
@@ -207,8 +206,14 @@
   }
 
   // Controls
-  document.getElementById('leftZone').addEventListener('touchstart', () => changeDirection('left'));
-  document.getElementById('rightZone').addEventListener('touchstart', () => changeDirection('right'));
+  document.getElementById('leftZone').addEventListener('touchstart', (e) => {
+    e.preventDefault(); // Prevent default zooming behavior
+    changeDirection('left');
+  });
+  document.getElementById('rightZone').addEventListener('touchstart', (e) => {
+    e.preventDefault(); // Prevent default zooming behavior
+    changeDirection('right');
+  });
   document.getElementById('restartButton').addEventListener('click', init);
 
   function changeDirection(turn) {
