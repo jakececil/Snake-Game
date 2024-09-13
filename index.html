@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <!-- Prevent double-tap zoom -->
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Rainbow Worm</title>
   <style>
@@ -13,11 +12,9 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      touch-action: none; /* Disable touch interactions */
-      -webkit-user-select: none; /* Prevent text selection */
-      -ms-user-select: none;
+      touch-action: none;
+      -webkit-user-select: none;
       user-select: none;
-      -webkit-touch-callout: none; /* Disable callout actions */
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -30,29 +27,23 @@
       text-align: center;
     }
     #gameContainer {
-      position: relative;
       width: 100%;
-      max-width: 390px; /* Adjusted to iPhone 14's screen width */
-      height: auto;
+      max-width: 390px;
     }
     canvas {
       background: #000;
       display: block;
       width: 100%;
-      height: auto;
     }
     #controls {
       width: 100%;
-      height: 150px; /* Adjust the height as needed */
+      height: 150px;
       display: flex;
     }
     .control-zone {
       flex: 1;
       height: 100%;
-      /* Uncomment below for visualizing control zones */
-      /* background-color: rgba(255, 255, 255, 0.1); */
     }
-    /* Game Over Overlay */
     #gameOverOverlay {
       position: fixed;
       top: 0;
@@ -64,9 +55,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-direction: column;
       z-index: 100;
-      display: none; /* Hidden by default */
+      display: none;
     }
     #gameOverOverlay button {
       margin-top: 20px;
@@ -80,63 +70,40 @@
   <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
   </div>
-  <!-- Control zones at the bottom of the screen -->
   <div id="controls">
     <div class="control-zone" id="leftZone"></div>
     <div class="control-zone" id="rightZone"></div>
   </div>
-  <!-- Game Over Overlay -->
   <div id="gameOverOverlay">
     <div id="gameOverText">Game Over!</div>
     <button id="restartButton">Restart</button>
   </div>
 
   <script>
-    // Canvas setup
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    // Game variables
-    let gridSize;
-    let snake;
-    let food;
-    let direction;
-    let changingDirection;
-    let score;
-    let steps;
-    let countdown;
-    let gameOverFlag = false;
-    let lastRenderTime = 0;
-    const gameSpeed = 10; // Adjust the game speed (higher is faster)
+    let gridSize, snake, food, direction, changingDirection, score, steps, countdown, gameOverFlag = false, lastRenderTime = 0;
+    const gameSpeed = 10;
+    const directions = { 0: { dx: 1, dy: 0 }, 90: { dx: 0, dy: -1 }, 180: { dx: -1, dy: 0 }, 270: { dx: 0, dy: 1 } };
 
-    const directions = {
-      0: { dx: 1, dy: 0 },     // Right
-      90: { dx: 0, dy: -1 },   // Up
-      180: { dx: -1, dy: 0 },  // Left
-      270: { dx: 0, dy: 1 }    // Down
-    };
-
-    // Adjust canvas size to fit the screen width
     function resizeCanvas() {
       const screenWidth = window.innerWidth;
-      const canvasSize = Math.min(screenWidth, 390); // 390px for iPhone 14 width
+      const canvasSize = Math.min(screenWidth, 390);
       canvas.width = canvasSize;
       canvas.height = canvasSize;
-      // Adjust gridSize based on canvas size
-      gridSize = canvas.width / 15; // Keep 15 cells per row/column
+      gridSize = canvas.width / 15;
     }
     window.addEventListener('resize', resizeCanvas);
 
-    // Initialize the game variables
     function init() {
       resizeCanvas();
       snake = [{ x: 7 * gridSize, y: 7 * gridSize }];
-      food = {};
-      direction = 0; // Angle in degrees
+      direction = 0;
       changingDirection = false;
       score = 0;
-      steps = 0; // Tracks the number of steps for color cycling
-      countdown = 3; // 3-second countdown before the game starts
+      steps = 0;
+      countdown = 5; // Slower countdown
       gameOverFlag = false;
       lastRenderTime = 0;
       updateScore();
@@ -145,21 +112,16 @@
       window.requestAnimationFrame(main);
     }
 
-    // Function to return a color based on step progression through color wheel
     function getColor(step) {
-      const hue = ((Math.floor(step / 5)) % 100) * 3.6; // Change color every 5 steps
-      return `hsl(${hue}, 100%, 50%)`;
+      return `hsl(${step % 360}, 100%, 50%)`;
     }
 
-    // Function to return the complementary (opposite) color of the current hue
     function getComplementaryColor(step) {
-      const hue = ((Math.floor(step / 5) + 50) % 100) * 3.6; // 180 degrees offset
-      return `hsl(${hue}, 100%, 50%)`;
+      return `hsl(${(step + 180) % 360}, 100%, 50%)`;
     }
 
     function main(currentTime) {
       if (gameOverFlag) return;
-
       window.requestAnimationFrame(main);
       const secondsSinceLastRender = (currentTime - lastRenderTime) / 1000;
       if (secondsSinceLastRender < 1 / gameSpeed) return;
@@ -190,8 +152,8 @@
     }
 
     function drawSnake() {
-      snake.forEach(function(part, index) {
-        const colorStep = steps - index;
+      snake.forEach((part, index) => {
+        const colorStep = steps + index * 10; // Color cycling along snake
         ctx.fillStyle = getColor(colorStep);
         ctx.fillRect(part.x, part.y, gridSize, gridSize);
       });
@@ -199,88 +161,44 @@
 
     function moveSnake() {
       const currentDirection = directions[direction % 360];
-      const moveX = currentDirection.dx * gridSize;
-      const moveY = currentDirection.dy * gridSize;
-
-      const head = { x: snake[0].x + moveX, y: snake[0].y + moveY };
-
-      // Add new head position
+      const head = { x: snake[0].x + currentDirection.dx * gridSize, y: snake[0].y + currentDirection.dy * gridSize };
       snake.unshift(head);
-
-      steps++; // Increase step count as the snake moves
-
-      // Check if the snake has eaten the food
+      steps++;
       if (head.x === food.x && head.y === food.y) {
-        score += 1;
+        score++;
         updateScore();
         createFood();
       } else {
-        snake.pop(); // Remove the tail
+        snake.pop();
       }
-    }
-
-    function changeDirection(turn) {
-      if (changingDirection) return;
-      changingDirection = true;
-
-      // Reverse steering behavior
-      if (turn === 'right') {
-        direction -= 90;  // Turn left
-      } else if (turn === 'left') {
-        direction += 90;  // Turn right
-      }
-      direction = (direction + 360) % 360; // Keep direction between 0-359 degrees
     }
 
     function createFood() {
       const maxFoodX = Math.floor(canvas.width / gridSize);
       const maxFoodY = Math.floor(canvas.height / gridSize);
-      food = {
-        x: Math.floor(Math.random() * maxFoodX) * gridSize,
-        y: Math.floor(Math.random() * maxFoodY) * gridSize
-      };
-      // Ensure food does not spawn on the snake
-      snake.forEach(function(part) {
-        if (part.x === food.x && part.y === food.y) {
-          createFood();
-        }
+      food = { x: Math.floor(Math.random() * maxFoodX) * gridSize, y: Math.floor(Math.random() * maxFoodY) * gridSize };
+      snake.forEach(part => {
+        if (part.x === food.x && part.y === food.y) createFood();
       });
     }
 
-    // Rotate food colors to be complementary to the worm's head color
     function drawFood() {
-      ctx.fillStyle = getComplementaryColor(steps); // Apple gets complementary color
+      ctx.fillStyle = getComplementaryColor(steps);
       ctx.fillRect(food.x, food.y, gridSize, gridSize);
     }
 
     function gameOver() {
-      // Check collision with self
       for (let i = 4; i < snake.length; i++) {
-        if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) {
-          return true;
-        }
+        if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) return true;
       }
-      // Check collision with walls
-      const hitLeftWall = snake[0].x < 0;
-      const hitRightWall = snake[0].x >= canvas.width;
-      const hitTopWall = snake[0].y < 0;
-      const hitBottomWall = snake[0].y >= canvas.height;
+      const hitLeftWall = snake[0].x < 0, hitRightWall = snake[0].x >= canvas.width, hitTopWall = snake[0].y < 0, hitBottomWall = snake[0].y >= canvas.height;
       return hitLeftWall || hitRightWall || hitTopWall || hitBottomWall;
     }
 
-    function drawBoundaries() {
-      // Draw game boundary
-      ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(0, 0, canvas.width, canvas.height);
-    }
-
-    // Update score counter
     function updateScore() {
       document.getElementById('score').textContent = 'Score: ' + score;
     }
 
-    // Display countdown before the game starts
     function displayCountdown() {
       clearCanvas();
       ctx.fillStyle = '#FFFFFF';
@@ -290,45 +208,30 @@
       ctx.fillText(countdown, canvas.width / 2, canvas.height / 2);
     }
 
-    // Show custom Game Over screen
     function showGameOverScreen() {
-      const overlay = document.getElementById('gameOverOverlay');
       document.getElementById('gameOverText').textContent = 'Game Over! Score: ' + score;
-      overlay.style.display = 'flex';
+      document.getElementById('gameOverOverlay').style.display = 'flex';
     }
 
-    // Hide Game Over screen
     function hideGameOverScreen() {
-      const overlay = document.getElementById('gameOverOverlay');
-      overlay.style.display = 'none';
+      document.getElementById('gameOverOverlay').style.display = 'none';
     }
 
-    // Restart the game
-    document.getElementById('restartButton').addEventListener('click', function() {
-      init();
+    document.getElementById('restartButton').addEventListener('click', init);
+    document.getElementById('leftZone').addEventListener('touchstart', () => changeDirection('left'));
+    document.getElementById('rightZone').addEventListener('touchstart', () => changeDirection('right'));
+
+    function changeDirection(turn) {
+      if (changingDirection) return;
+      changingDirection = true;
+      direction = (turn === 'right' ? direction - 90 : direction + 90 + 360) % 360;
+    }
+
+    window.addEventListener('keydown', event => {
+      if (event.key === 'ArrowLeft') changeDirection('left');
+      else if (event.key === 'ArrowRight') changeDirection('right');
     });
 
-    // Mobile Control Zones
-    document.getElementById('leftZone').addEventListener('touchstart', function(event) {
-      event.preventDefault();
-      changeDirection('left');
-    });
-
-    document.getElementById('rightZone').addEventListener('touchstart', function(event) {
-      event.preventDefault();
-      changeDirection('right');
-    });
-
-    // Keyboard Controls for Desktop
-    document.addEventListener('keydown', function(event) {
-      if (event.key === 'ArrowLeft') { // Left arrow key
-        changeDirection('left');
-      } else if (event.key === 'ArrowRight') { // Right arrow key
-        changeDirection('right');
-      }
-    });
-
-    // Initialize and start the game
     init();
   </script>
 </body>
