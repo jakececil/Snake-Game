@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> <!-- Disable zoom on mobile -->
-  <title>Snake Game</title>
+  <title>Rainbow Worm Game</title>
   <style>
     body {
       margin: 0;
@@ -17,12 +17,26 @@
     }
     canvas {
       background: #000;
-      position: relative;
     }
     #score {
       color: #FFF;
       font-size: 24px;
       margin-bottom: 10px;
+    }
+    #controls {
+      position: absolute;
+      bottom: 0;
+      width: 100vw;
+      display: flex;
+    }
+    .control-button {
+      flex: 1;
+      height: 100px; /* Adjust as needed */
+      background-color: rgba(255, 255, 255, 0.1);
+      color: white;
+      font-size: 24px;
+      border: none;
+      outline: none;
     }
 
     /* Make canvas responsive on mobile */
@@ -37,6 +51,13 @@
 <body>
   <div id="score">Score: 0</div> <!-- Real-time score counter -->
   <canvas id="gameCanvas" width="450" height="450"></canvas>
+  
+  <!-- Control buttons for mobile, placed below the canvas -->
+  <div id="controls">
+    <button class="control-button" id="leftButton">◄</button>
+    <button class="control-button" id="rightButton">►</button>
+  </div>
+
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -48,6 +69,8 @@
     let direction = 0; // Angle in degrees
     let changingDirection = false;
     let score = 0;
+    let steps = 0; // Tracks the number of steps for color cycling
+    let countdown = 3; // 3-second countdown before the game starts
 
     const directions = {
       0: { dx: gridSize, dy: 0 },     // Right
@@ -56,12 +79,25 @@
       270: { dx: 0, dy: gridSize }    // Down
     };
 
+    // Function to return a color based on step progression through color wheel
+    function getColor(step) {
+      const hue = (step % 100) * 3.6; // 360 degrees / 100 steps for smooth transition
+      return `hsl(${hue}, 100%, 50%)`;
+    }
+
     function main() {
+      if (countdown > 0) {
+        displayCountdown();
+        setTimeout(main, 1000);
+        return;
+      }
+
       if (gameOver()) {
         alert('Game Over! Your final score was ' + score);
         document.location.reload();
         return;
       }
+
       changingDirection = false;
       setTimeout(function onTick() {
         clearCanvas();
@@ -79,8 +115,9 @@
     }
 
     function drawSnake() {
-      ctx.fillStyle = '#00FF00';
-      snake.forEach(function(part) {
+      snake.forEach(function(part, index) {
+        const colorStep = steps - index;
+        ctx.fillStyle = getColor(colorStep);
         ctx.fillRect(part.x, part.y, gridSize, gridSize);
       });
     }
@@ -89,6 +126,7 @@
       const currentDirection = directions[direction % 360];
       const head = { x: snake[0].x + currentDirection.dx, y: snake[0].y + currentDirection.dy };
       snake.unshift(head);
+      steps++; // Increase step count as the snake moves
       if (head.x === food.x && head.y === food.y) {
         score += 1;
         updateScore();
@@ -142,15 +180,6 @@
       ctx.strokeStyle = '#FFFFFF';
       ctx.lineWidth = 2;
       ctx.strokeRect(0, 0, canvas.width, canvas.height);
-
-      // Draw center vertical line for mobile only
-      if (window.innerWidth <= 600) {
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';  // Faint white line for mobile
-        ctx.beginPath();
-        ctx.moveTo(canvas.width / 2, 0);
-        ctx.lineTo(canvas.width / 2, canvas.height);
-        ctx.stroke();
-      }
     }
 
     // Update score counter
@@ -158,14 +187,23 @@
       document.getElementById('score').textContent = 'Score: ' + score;
     }
 
-    // Left and Right Hemisphere Taps for Mobile
-    canvas.addEventListener('touchstart', function(event) {
-      const touchX = event.touches[0].clientX;
-      if (touchX < window.innerWidth / 2) {
-        changeDirection('left');
-      } else {
-        changeDirection('right');
-      }
+    // Display countdown before the game starts
+    function displayCountdown() {
+      clearCanvas();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '48px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(countdown, canvas.width / 2, canvas.height / 2);
+      countdown--;
+    }
+
+    // Mobile Control Buttons
+    document.getElementById('leftButton').addEventListener('touchstart', function() {
+      changeDirection('left');
+    });
+
+    document.getElementById('rightButton').addEventListener('touchstart', function() {
+      changeDirection('right');
     });
 
     // Keyboard Controls for Desktop
