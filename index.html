@@ -18,35 +18,33 @@
       -ms-user-select: none;
       user-select: none;
       -webkit-touch-callout: none; /* Disable callout actions */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
     #gameContainer {
       position: relative;
-      width: 100%;
-      height: 100%;
+      width: 450px;
+      height: 450px;
     }
     #score {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
       color: #FFF;
       font-size: 24px;
-      z-index: 10;
+      margin-bottom: 10px;
+      text-align: center;
     }
     canvas {
-      display: block;
       background: #000;
-      width: 100%;
-      height: 100%;
+      display: block;
     }
     #controls {
       position: absolute;
-      top: 0;
+      bottom: 0;
       left: 0;
       width: 100%;
-      height: 100%;
+      height: 150px; /* Adjust the height as needed */
       display: flex;
-      z-index: 20;
     }
     .control-zone {
       flex: 1;
@@ -57,28 +55,20 @@
   </style>
 </head>
 <body>
+  <div id="score">Score: 0</div>
   <div id="gameContainer">
-    <div id="score">Score: 0</div>
-    <canvas id="gameCanvas"></canvas>
-    <!-- Control zones covering entire left and right halves -->
-    <div id="controls">
-      <div class="control-zone" id="leftZone"></div>
-      <div class="control-zone" id="rightZone"></div>
-    </div>
+    <canvas id="gameCanvas" width="450" height="450"></canvas>
+  </div>
+  <!-- Control zones at the bottom of the screen -->
+  <div id="controls">
+    <div class="control-zone" id="leftZone"></div>
+    <div class="control-zone" id="rightZone"></div>
   </div>
 
   <script>
     // Canvas setup
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-
-    // Adjust canvas size to fit container
-    function resizeCanvas() {
-      canvas.width = document.getElementById('gameContainer').clientWidth;
-      canvas.height = document.getElementById('gameContainer').clientHeight;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
 
     const gridSize = 30; 
     let snake = [{ x: 150, y: 150 }];
@@ -173,8 +163,11 @@
     }
 
     function createFood() {
-      food.x = Math.floor(Math.random() * (canvas.width / gridSize)) * gridSize;
-      food.y = Math.floor(Math.random() * (canvas.height / gridSize)) * gridSize;
+      const maxFoodX = canvas.width / gridSize;
+      const maxFoodY = canvas.height / gridSize;
+      food.x = Math.floor(Math.random() * maxFoodX) * gridSize;
+      food.y = Math.floor(Math.random() * maxFoodY) * gridSize;
+      // Ensure food does not spawn on the snake
       snake.forEach(function(part) {
         if (part.x === food.x && part.y === food.y) {
           createFood();
