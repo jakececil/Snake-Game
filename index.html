@@ -28,12 +28,13 @@
       bottom: 0;
       width: 100vw;
       display: flex;
-      background-color: rgba(255, 255, 255, 0.1); /* Make the control background semi-transparent */
+      justify-content: space-between;
+      border-top: 2px solid gray; /* Gray line to divide buttons */
     }
     .control-zone {
       flex: 1;
       height: 100px; /* Extend control zones down */
-      background-color: #777; /* Light gray for contrast */
+      background-color: #000; /* Keep background black */
       color: white;
       font-size: 48px;
       text-align: center;
@@ -73,7 +74,6 @@
     let score = 0;
     let steps = 0; // Tracks the number of steps for color cycling
     let countdown = 3; // 3-second countdown before the game starts
-    let titleScreen = true; // Title screen flag
 
     const directions = {
       0: { dx: gridSize, dy: 0 },     // Right
@@ -88,12 +88,13 @@
       return `hsl(${hue}, 100%, 50%)`;
     }
 
-    function main() {
-      if (titleScreen) {
-        showTitleScreen();
-        return;
-      }
+    // Function to return the complementary (opposite) color of the current hue
+    function getComplementaryColor(step) {
+      const hue = ((step + 50) % 100) * 3.6; // 180 degrees offset on the color wheel
+      return `hsl(${hue}, 100%, 50%)`;
+    }
 
+    function main() {
       if (countdown > 0) {
         displayCountdown();
         setTimeout(main, 1000);
@@ -167,9 +168,9 @@
       });
     }
 
-    // Rotate food colors
+    // Rotate food colors to be complementary to the worm's head color
     function drawFood() {
-      ctx.fillStyle = getColor(steps); // Food also rotates colors
+      ctx.fillStyle = getComplementaryColor(steps); // Apple gets complementary color
       ctx.fillRect(food.x, food.y, gridSize, gridSize);
     }
 
@@ -204,27 +205,6 @@
       ctx.textAlign = 'center';
       ctx.fillText(countdown, canvas.width / 2, canvas.height / 2);
       countdown--;
-    }
-
-    // Show the title screen
-    function showTitleScreen() {
-      clearCanvas();
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = '48px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('Rainbow Worm', canvas.width / 2, canvas.height / 2 - 20);
-      ctx.font = '24px Arial';
-      ctx.fillText('Tap to Start', canvas.width / 2, canvas.height / 2 + 40);
-
-      canvas.addEventListener('touchstart', startGame, { once: true });
-      canvas.addEventListener('click', startGame, { once: true }); // For desktop
-    }
-
-    // Start the game and exit the title screen
-    function startGame() {
-      titleScreen = false;
-      countdown = 3; // Reset countdown for each game start
-      main();
     }
 
     // Mobile Control Buttons
