@@ -10,6 +10,8 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
+      height: 100vh;
     }
     canvas {
       background: #000;
@@ -18,19 +20,27 @@
       margin-top: 10px;
     }
     #controls button {
-      width: 60px;
-      height: 60px;
-      font-size: 24px;
+      width: 80px; /* Increased button size for better touch control */
+      height: 80px;
+      font-size: 32px;
       margin: 5px;
     }
     #controls .control-row {
       display: flex;
       justify-content: center;
     }
+
+    /* Make canvas responsive on mobile */
+    @media (max-width: 600px) {
+      canvas {
+        width: 90vw;
+        height: 90vw;
+      }
+    }
   </style>
 </head>
 <body>
-  <canvas id="gameCanvas" width="300" height="300"></canvas>
+  <canvas id="gameCanvas" width="450" height="450"></canvas> <!-- Increased canvas size -->
   <div id="controls">
     <div class="control-row">
       <button id="upButton">▲</button>
@@ -44,7 +54,7 @@
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    const gridSize = 15;
+    const gridSize = 30; // Increased grid size for better visibility
     let snake = [{ x: 150, y: 150 }];
     let food = {};
     let dx = gridSize;
