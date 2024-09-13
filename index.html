@@ -79,8 +79,8 @@
   const ctx = canvas.getContext('2d');
   let gridSize, snake, food, direction, score, steps, countdown;
   let gameOverFlag = false;
-  let obstacle = null;
-  let obstacleLife = 0;
+  let obstacles = [];
+  let obstacleLife = [];
   const gameSpeed = 10;
   let gameLoop;
 
@@ -99,8 +99,8 @@
     countdown = 3;
     gameOverFlag = false;
     snake = [{ x: 10 * gridSize, y: 10 * gridSize }];
-    obstacle = null;
-    obstacleLife = 0;
+    obstacles = [];
+    obstacleLife = [];
     createFood();
     document.getElementById('score').textContent = `Score: ${score}`;
     document.getElementById('gameOverOverlay').style.display = 'none';
@@ -156,14 +156,17 @@
     if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height || snakeCollision(head)) {
       gameOverFlag = true;
     }
-    if (obstacle && obstacleLife > 50 && head.x === obstacle.x && head.y === obstacle.y) {
-      gameOverFlag = true;
+    for (let i = 0; i < obstacles.length; i++) {
+      if (obstacleLife[i] > 50 && head.x === obstacles[i].x && head.y === obstacles[i].y) {
+        gameOverFlag = true;
+      }
     }
     snake.unshift(head);
     if (head.x === food.x && head.y === food.y) {
       score++;
       document.getElementById('score').textContent = `Score: ${score}`;
       createFood();
+      maybeSpawnMoreObstacles();  // Spawn more obstacles based on score
     } else {
       snake.pop();
     }
@@ -206,28 +209,38 @@
   }
 
   function handleObstacles() {
-    if (obstacleLife <= 0) {
-      spawnObstacle();
-    } else {
-      obstacleLife--;
-      drawObstacle();
+    for (let i = 0; i < obstacles.length; i++) {
+      if (obstacleLife[i] <= 0) {
+        obstacles.splice(i, 1);
+        obstacleLife.splice(i, 1);
+        i--;
+      } else {
+        obstacleLife[i]--;
+        drawObstacle(obstacles[i], obstacleLife[i]);
+      }
     }
   }
 
   function spawnObstacle() {
-    obstacle = {
+    let obstacle = {
       x: Math.floor(Math.random() * 18 + 1) * gridSize,
       y: Math.floor(Math.random() * 18 + 1) * gridSize
     };
     snake.forEach(part => {
       if (part.x === obstacle.x && part.y === obstacle.y) spawnObstacle();
     });
-    obstacleLife = 200;
+    obstacles.push(obstacle);
+    obstacleLife.push(200);
   }
 
-  function drawObstacle() {
-    if (!obstacle) return;
-    let opacity = obstacleLife > 150 ? (200 - obstacleLife) / 50 : obstacleLife / 50;
+  function maybeSpawnMoreObstacles() {
+    if (score % 10 === 0 && score > 0) {
+      spawnObstacle();
+    }
+  }
+
+  function drawObstacle(obstacle, life) {
+    let opacity = life > 150 ? (200 - life) / 50 : life / 50;
     ctx.fillStyle = `rgba(255, 255, 0, ${opacity})`;
     ctx.fillRect(obstacle.x, obstacle.y, gridSize, gridSize);
   }
