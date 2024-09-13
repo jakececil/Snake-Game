@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0">
   <title>Rainbow Worm Game</title>
   <style>
     body {
@@ -14,10 +14,15 @@
       height: 100vh;
       background-color: #000;
       touch-action: manipulation; /* Prevent zooming */
+      -webkit-touch-callout: none;  /* Disable long press actions */
+      -webkit-user-select: none;    /* Prevent text selection */
+      -ms-user-select: none;
+      user-select: none;
     }
     canvas {
       background-color: black;
       display: block;
+      border: 2px solid white; /* Add a clear white border for visibility */
     }
     #score {
       position: absolute;
