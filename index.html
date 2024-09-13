@@ -52,6 +52,27 @@
       /* Uncomment below for visualizing control zones */
       /* background-color: rgba(255, 255, 255, 0.1); */
     }
+    /* Game Over Overlay */
+    #gameOverOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      color: #FFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 100;
+      display: none; /* Hidden by default */
+    }
+    #gameOverOverlay button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 24px;
+    }
   </style>
 </head>
 <body>
@@ -63,6 +84,11 @@
   <div id="controls">
     <div class="control-zone" id="leftZone"></div>
     <div class="control-zone" id="rightZone"></div>
+  </div>
+  <!-- Game Over Overlay -->
+  <div id="gameOverOverlay">
+    <div id="gameOverText">Game Over!</div>
+    <button id="restartButton">Restart</button>
   </div>
 
   <script>
@@ -76,28 +102,45 @@
       const canvasSize = Math.min(screenWidth, 390); // 390px for iPhone 14 width
       canvas.width = canvasSize;
       canvas.height = canvasSize;
+      // Adjust gridSize based on canvas size
+      gridSize = canvas.width / 15; // Keep 15 cells per row/column
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    const gridSize = 30; 
-    let snake = [{ x: 150, y: 150 }];
-    let food = {};
-    let direction = 0; // Angle in degrees
-    let changingDirection = false;
-    let score = 0;
-    let steps = 0; // Tracks the number of steps for color cycling
-    let countdown = 3; // 3-second countdown before the game starts
+    let gridSize;
+    let snake;
+    let food;
+    let direction;
+    let changingDirection;
+    let score;
+    let steps;
+    let countdown;
+    let gameLoopInterval;
+    let gameOverFlag = false;
 
     const directions = {
-      0: { dx: gridSize, dy: 0 },     // Right
-      90: { dx: 0, dy: -gridSize },   // Up
-      180: { dx: -gridSize, dy: 0 },  // Left
-      270: { dx: 0, dy: gridSize }    // Down
+      0: { dx: 1, dy: 0 },     // Right
+      90: { dx: 0, dy: -1 },   // Up
+      180: { dx: -1, dy: 0 },  // Left
+      270: { dx: 0, dy: 1 }    // Down
     };
 
-    let lastRenderTime = 0;
-    const gameSpeed = 10; // Adjust this value to make the game faster or slower
+    // Initialize the game variables
+    function init() {
+      snake = [{ x: 7 * gridSize, y: 7 * gridSize }];
+      food = {};
+      direction = 0; // Angle in degrees
+      changingDirection = false;
+      score = 0;
+      steps = 0; // Tracks the number of steps for color cycling
+      countdown = 3; // 3-second countdown before the game starts
+      gameOverFlag = false;
+      updateScore();
+      createFood();
+      clearInterval(gameLoopInterval);
+      gameLoopInterval = setInterval(main, 50); // 20 FPS
+    }
 
     // Function to return a color based on step progression through color wheel
     function getColor(step) {
@@ -111,11 +154,8 @@
       return `hsl(${hue}, 100%, 50%)`;
     }
 
-    function main(currentTime) {
-      window.requestAnimationFrame(main);
-      const secondsSinceLastRender = (currentTime - lastRenderTime) / 1000;
-      if (secondsSinceLastRender < 1 / gameSpeed) return;
-      lastRenderTime = currentTime;
+    function main() {
+      if (gameOverFlag) return;
 
       if (countdown > 0) {
         displayCountdown();
@@ -124,8 +164,9 @@
       }
 
       if (gameOver()) {
-        alert('Game Over! Your final score was ' + score);
-        document.location.reload();
+        showGameOverScreen();
+        gameOverFlag = true;
+        clearInterval(gameLoopInterval);
         return;
       }
 
@@ -151,10 +192,21 @@
 
     function moveSnake() {
       const currentDirection = directions[direction % 360];
-      const head = { x: snake[0].x + currentDirection.dx, y: snake[0].y + currentDirection.dy };
+      const moveX = currentDirection.dx * (gridSize / 4); // Move in smaller increments
+      const moveY = currentDirection.dy * (gridSize / 4);
+
+      const head = { x: snake[0].x + moveX, y: snake[0].y + moveY };
+      // Round positions to avoid floating point errors
+      head.x = Math.round(head.x * 1000) / 1000;
+      head.y = Math.round(head.y * 1000) / 1000;
+
+      // Add new head position
       snake.unshift(head);
+
       steps++; // Increase step count as the snake moves
-      if (head.x === food.x && head.y === food.y) {
+
+      // Check if the snake has reached the next grid position
+      if (Math.abs(head.x - food.x) < gridSize / 4 && Math.abs(head.y - food.y) < gridSize / 4) {
         score += 1;
         updateScore();
         createFood();
@@ -179,8 +231,10 @@
     function createFood() {
       const maxFoodX = Math.floor(canvas.width / gridSize);
       const maxFoodY = Math.floor(canvas.height / gridSize);
-      food.x = Math.floor(Math.random() * maxFoodX) * gridSize;
-      food.y = Math.floor(Math.random() * maxFoodY) * gridSize;
+      food = {
+        x: Math.floor(Math.random() * maxFoodX) * gridSize,
+        y: Math.floor(Math.random() * maxFoodY) * gridSize
+      };
       // Ensure food does not spawn on the snake
       snake.forEach(function(part) {
         if (part.x === food.x && part.y === food.y) {
@@ -196,9 +250,14 @@
     }
 
     function gameOver() {
+      // Check collision with self
       for (let i = 4; i < snake.length; i++) {
-        if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) return true;
+        if (Math.abs(snake[i].x - snake[0].x) < gridSize / 4 &&
+            Math.abs(snake[i].y - snake[0].y) < gridSize / 4) {
+          return true;
+        }
       }
+      // Check collision with walls
       const hitLeftWall = snake[0].x < 0;
       const hitRightWall = snake[0].x >= canvas.width;
       const hitTopWall = snake[0].y < 0;
@@ -227,6 +286,20 @@
       ctx.fillText(countdown, canvas.width / 2, canvas.height / 2);
     }
 
+    // Show custom Game Over screen
+    function showGameOverScreen() {
+      const overlay = document.getElementById('gameOverOverlay');
+      document.getElementById('gameOverText').textContent = 'Game Over! Score: ' + score;
+      overlay.style.display = 'flex';
+    }
+
+    // Restart the game
+    document.getElementById('restartButton').addEventListener('click', function() {
+      const overlay = document.getElementById('gameOverOverlay');
+      overlay.style.display = 'none';
+      init();
+    });
+
     // Mobile Control Zones
     document.getElementById('leftZone').addEventListener('touchstart', function(event) {
       event.preventDefault();
@@ -247,8 +320,8 @@
       }
     });
 
-    createFood();
-    window.requestAnimationFrame(main);
+    // Initialize and start the game
+    init();
   </script>
 </body>
 </html>
