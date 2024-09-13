@@ -13,7 +13,7 @@
       align-items: center;
       justify-content: center;
       height: 100vh;
-      
+      touch-action: manipulation; /* Disable double-tap zoom and other touch defaults */
     }
     canvas {
       background: #000;
@@ -25,7 +25,7 @@
     }
     #controls {
       position: absolute;
-      bottom: -30;
+      bottom: 15;
       width: 100vw;
       display: flex;
       justify-content: space-between;
