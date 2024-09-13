@@ -23,25 +23,25 @@
       align-items: center;
       justify-content: center;
     }
-    #gameContainer {
-      position: relative;
-      width: 450px;
-      height: 450px;
-    }
     #score {
       color: #FFF;
       font-size: 24px;
       margin-bottom: 10px;
       text-align: center;
     }
+    #gameContainer {
+      position: relative;
+      width: 100%;
+      max-width: 390px; /* Adjusted to iPhone 14's screen width */
+      height: auto;
+    }
     canvas {
       background: #000;
       display: block;
+      width: 100%;
+      height: auto;
     }
     #controls {
-      position: absolute;
-      bottom: 0;
-      left: 0;
       width: 100%;
       height: 150px; /* Adjust the height as needed */
       display: flex;
@@ -57,7 +57,7 @@
 <body>
   <div id="score">Score: 0</div>
   <div id="gameContainer">
-    <canvas id="gameCanvas" width="450" height="450"></canvas>
+    <canvas id="gameCanvas"></canvas>
   </div>
   <!-- Control zones at the bottom of the screen -->
   <div id="controls">
@@ -69,6 +69,16 @@
     // Canvas setup
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
+
+    // Adjust canvas size to fit the screen width
+    function resizeCanvas() {
+      const screenWidth = window.innerWidth;
+      const canvasSize = Math.min(screenWidth, 390); // 390px for iPhone 14 width
+      canvas.width = canvasSize;
+      canvas.height = canvasSize;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
     const gridSize = 30; 
     let snake = [{ x: 150, y: 150 }];
@@ -86,22 +96,30 @@
       270: { dx: 0, dy: gridSize }    // Down
     };
 
+    let lastRenderTime = 0;
+    const gameSpeed = 10; // Adjust this value to make the game faster or slower
+
     // Function to return a color based on step progression through color wheel
     function getColor(step) {
-      const hue = (step % 100) * 3.6; // 360 degrees / 100 steps for smooth transition
+      const hue = ((Math.floor(step / 5)) % 100) * 3.6; // Change color every 5 steps
       return `hsl(${hue}, 100%, 50%)`;
     }
 
     // Function to return the complementary (opposite) color of the current hue
     function getComplementaryColor(step) {
-      const hue = ((step + 50) % 100) * 3.6; // 180 degrees offset on the color wheel
+      const hue = ((Math.floor(step / 5) + 50) % 100) * 3.6; // 180 degrees offset
       return `hsl(${hue}, 100%, 50%)`;
     }
 
-    function main() {
+    function main(currentTime) {
+      window.requestAnimationFrame(main);
+      const secondsSinceLastRender = (currentTime - lastRenderTime) / 1000;
+      if (secondsSinceLastRender < 1 / gameSpeed) return;
+      lastRenderTime = currentTime;
+
       if (countdown > 0) {
         displayCountdown();
-        setTimeout(main, 1000);
+        countdown--;
         return;
       }
 
@@ -112,19 +130,15 @@
       }
 
       changingDirection = false;
-      setTimeout(function onTick() {
-        clearCanvas();
-        drawBoundaries();
-        drawFood();
-        moveSnake();
-        drawSnake();
-        main();
-      }, 100);
+      clearCanvas();
+      drawBoundaries();
+      moveSnake();
+      drawSnake();
+      drawFood();
     }
 
     function clearCanvas() {
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 
     function drawSnake() {
@@ -163,8 +177,8 @@
     }
 
     function createFood() {
-      const maxFoodX = canvas.width / gridSize;
-      const maxFoodY = canvas.height / gridSize;
+      const maxFoodX = Math.floor(canvas.width / gridSize);
+      const maxFoodY = Math.floor(canvas.height / gridSize);
       food.x = Math.floor(Math.random() * maxFoodX) * gridSize;
       food.y = Math.floor(Math.random() * maxFoodY) * gridSize;
       // Ensure food does not spawn on the snake
@@ -211,7 +225,6 @@
       ctx.font = '48px Arial';
       ctx.textAlign = 'center';
       ctx.fillText(countdown, canvas.width / 2, canvas.height / 2);
-      countdown--;
     }
 
     // Mobile Control Zones
@@ -235,7 +248,7 @@
     });
 
     createFood();
-    main();
+    window.requestAnimationFrame(main);
   </script>
 </body>
 </html>
