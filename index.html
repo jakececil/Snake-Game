@@ -13,9 +13,9 @@
       align-items: center;
       height: 100vh;
       background-color: #000;
-      touch-action: manipulation; /* Prevent zooming */
-      -webkit-touch-callout: none;  /* Disable long press actions */
-      -webkit-user-select: none;    /* Prevent text selection */
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
       -ms-user-select: none;
       user-select: none;
     }
@@ -62,7 +62,6 @@
   <div id="score">Score: 0</div>
   <canvas id="gameCanvas"></canvas>
   
-  <!-- Game Over Overlay -->
   <div id="gameOverOverlay">
     <div>
       <p id="gameOverText">Game Over! Score: 0</p>
@@ -70,7 +69,6 @@
     </div>
   </div>
 
-  <!-- Mobile Controls -->
   <div id="controls">
     <div class="control-zone" id="leftZone"></div>
     <div class="control-zone" id="rightZone"></div>
@@ -81,30 +79,33 @@
   const ctx = canvas.getContext('2d');
   let gridSize, snake, food, direction, score, steps, countdown;
   let gameOverFlag = false;
-  const gameSpeed = 10; // Controls game update speed (higher number slows it down)
+  let obstacle = null;
+  let obstacleLife = 0;
+  const gameSpeed = 10;
   let gameLoop;
 
   function resizeCanvas() {
     const size = Math.min(window.innerWidth, window.innerHeight) * 0.9;
     canvas.width = size;
     canvas.height = size;
-    gridSize = Math.floor(canvas.width / 20);  // 20 grid units across
+    gridSize = Math.floor(canvas.width / 20);
   }
 
-  // Game Initialization
   function init() {
     resizeCanvas();
     direction = 0;
     score = 0;
     steps = 0;
-    countdown = 3; // Slower countdown
+    countdown = 3;
     gameOverFlag = false;
     snake = [{ x: 10 * gridSize, y: 10 * gridSize }];
+    obstacle = null;
+    obstacleLife = 0;
     createFood();
     document.getElementById('score').textContent = `Score: ${score}`;
     document.getElementById('gameOverOverlay').style.display = 'none';
     clearInterval(gameLoop);
-    gameLoop = setInterval(main, 1000 / gameSpeed); // Adjust game loop speed
+    gameLoop = setInterval(main, 1000 / gameSpeed);
   }
 
   function main() {
@@ -112,17 +113,16 @@
       displayCountdown();
       return;
     }
-
     if (gameOverFlag) {
       clearInterval(gameLoop);
       showGameOver();
       return;
     }
-
     moveSnake();
     clearCanvas();
     drawFood();
     drawSnake();
+    handleObstacles();
     steps++;
   }
 
@@ -141,7 +141,7 @@
 
   function drawSnake() {
     snake.forEach((part, index) => {
-      const colorStep = (steps + index * 15) % 360;  // Color cycling effect
+      const colorStep = (steps + index * 15) % 360;
       ctx.fillStyle = `hsl(${colorStep}, 100%, 50%)`;
       ctx.fillRect(part.x, part.y, gridSize, gridSize);
     });
@@ -153,12 +153,12 @@
       x: snake[0].x + currentDirection.dx * gridSize, 
       y: snake[0].y + currentDirection.dy * gridSize 
     };
-
-    // Check collisions
     if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height || snakeCollision(head)) {
       gameOverFlag = true;
     }
-
+    if (obstacle && obstacleLife > 50 && head.x === obstacle.x && head.y === obstacle.y) {
+      gameOverFlag = true;
+    }
     snake.unshift(head);
     if (head.x === food.x && head.y === food.y) {
       score++;
@@ -171,20 +171,20 @@
 
   function getDirectionOffset() {
     switch (direction) {
-      case 0: return { dx: 1, dy: 0 };    // Right
-      case 90: return { dx: 0, dy: -1 };  // Up
-      case 180: return { dx: -1, dy: 0 }; // Left
-      case 270: return { dx: 0, dy: 1 };  // Down
+      case 0: return { dx: 1, dy: 0 };
+      case 90: return { dx: 0, dy: -1 };
+      case 180: return { dx: -1, dy: 0 };
+      case 270: return { dx: 0, dy: 1 };
     }
   }
 
   function createFood() {
     food = {
-      x: Math.floor(Math.random() * 18 + 1) * gridSize,  // Keeps it a bit away from edges
+      x: Math.floor(Math.random() * 18 + 1) * gridSize,
       y: Math.floor(Math.random() * 18 + 1) * gridSize
     };
     snake.forEach(part => {
-      if (part.x === food.x && part.y === food.y) createFood();  // Ensure no food on snake
+      if (part.x === food.x && part.y === food.y) createFood();
     });
   }
 
@@ -205,13 +205,39 @@
     document.getElementById('gameOverText').textContent = `Game Over! Score: ${score}`;
   }
 
-  // Controls
+  function handleObstacles() {
+    if (obstacleLife <= 0) {
+      spawnObstacle();
+    } else {
+      obstacleLife--;
+      drawObstacle();
+    }
+  }
+
+  function spawnObstacle() {
+    obstacle = {
+      x: Math.floor(Math.random() * 18 + 1) * gridSize,
+      y: Math.floor(Math.random() * 18 + 1) * gridSize
+    };
+    snake.forEach(part => {
+      if (part.x === obstacle.x && part.y === obstacle.y) spawnObstacle();
+    });
+    obstacleLife = 200;
+  }
+
+  function drawObstacle() {
+    if (!obstacle) return;
+    let opacity = obstacleLife > 150 ? (200 - obstacleLife) / 50 : obstacleLife / 50;
+    ctx.fillStyle = `rgba(255, 255, 0, ${opacity})`;
+    ctx.fillRect(obstacle.x, obstacle.y, gridSize, gridSize);
+  }
+
   document.getElementById('leftZone').addEventListener('touchstart', (e) => {
-    e.preventDefault(); // Prevent default zooming behavior
+    e.preventDefault();
     changeDirection('left');
   });
   document.getElementById('rightZone').addEventListener('touchstart', (e) => {
-    e.preventDefault(); // Prevent default zooming behavior
+    e.preventDefault();
     changeDirection('right');
   });
   document.getElementById('restartButton').addEventListener('click', init);
@@ -226,7 +252,6 @@
     if (event.key === 'ArrowRight') changeDirection('right');
   });
 
-  // Start Game
   window.addEventListener('resize', resizeCanvas);
   init();
 </script>
