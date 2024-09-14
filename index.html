@@ -87,7 +87,8 @@
   let obstacles = [];
   let obstacleLife = [];
   let invulnerable = false;
-  let invulnerableJustActivated = false;
+  let invulnerabilityTimer = 0;
+  let gracePeriod = false;
   let powerUp = null;
   let powerUpActive = false;
   const gameSpeed = 10;
@@ -108,7 +109,8 @@
     countdown = 3;
     gameOverFlag = false;
     invulnerable = false;
-    invulnerableJustActivated = false;
+    invulnerabilityTimer = 0;
+    gracePeriod = false;
     powerUp = null;
     powerUpActive = false;
     snake = [{ x: 10 * gridSize, y: 10 * gridSize }];
@@ -172,19 +174,6 @@
     head.x = (head.x + canvas.width) % canvas.width;
     head.y = (head.y + canvas.height) % canvas.height;
 
-    if (!invulnerable) {
-      if (snakeCollision(head)) {
-        gameOverFlag = true;
-      }
-      for (let i = 0; i < obstacles.length; i++) {
-        if (obstacleLife[i] > 50 && head.x === obstacles[i].x && head.y === obstacles[i].y) {
-          gameOverFlag = true;
-        }
-      }
-    } else {
-      invulnerableJustActivated = false;
-    }
-
     snake.unshift(head);
 
     if (head.x === food.x && head.y === food.y) {
@@ -199,16 +188,37 @@
 
     if (powerUp && head.x === powerUp.x && head.y === powerUp.y) {
       invulnerable = true;
-      invulnerableJustActivated = true;
+      invulnerabilityTimer = gameSpeed * 10; // 10 seconds worth of game ticks
+      gracePeriod = false;
       powerUp = null;
+      powerUpActive = false;
     }
 
-    if (invulnerable && !invulnerableJustActivated) {
-      // Check if the snake is out of harm's way
-      if (!snakeCollision(head) && !obstacleCollision(head)) {
+    if (invulnerable) {
+      invulnerabilityTimer--;
+      if (invulnerabilityTimer <= 0) {
         invulnerable = false;
+        // Check if currently in danger
+        if (isInDanger()) {
+          gracePeriod = true;
+        }
+      }
+    } else if (gracePeriod) {
+      // Check if snake has moved out of danger
+      if (!isInDanger()) {
+        gracePeriod = false;
+      }
+    } else {
+      // Normal collision checks
+      if (snakeCollision(head) || obstacleCollision(head)) {
+        gameOverFlag = true;
       }
     }
+  }
+
+  function isInDanger() {
+    const head = snake[0];
+    return snakeCollision(head) || obstacleCollision(head);
   }
 
   function getDirectionOffset() {
@@ -294,7 +304,7 @@
   }
 
   function maybeSpawnPowerUp() {
-    if (score % 15 === 0 && !powerUpActive) {
+    if (score % 15 === 0 && !powerUpActive && score !== 0) {
       spawnPowerUp();
       powerUpActive = true;
     }
