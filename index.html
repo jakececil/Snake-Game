@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Meta and styles remain mostly the same -->
+  <!-- Meta and styles remain the same -->
   <meta charset="UTF-8">
   <!-- Prevent double-tap zoom -->
   <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0">
-  <title>Rainbow Worm Game with Invulnerability Visuals</title>
+  <title>Rainbow Worm Game with Improved Obstacles</title>
   <style>
     body {
       margin: 0;
@@ -264,7 +264,7 @@
       x: Math.floor(Math.random() * 20) * gridSize,
       y: Math.floor(Math.random() * 20) * gridSize
     };
-    if (positionOccupied(food)) {
+    if (positionOccupied(food) || isInFrontOfSnake(food)) {
       createFood();
     }
   }
@@ -273,6 +273,20 @@
     return snake.some(part => part.x === position.x && part.y === position.y) ||
            obstacles.some(obstacle => obstacle.x === position.x && obstacle.y === position.y) ||
            (powerUp && powerUp.x === position.x && powerUp.y === position.y);
+  }
+
+  // Helper function to check if a position is directly in front of the snake
+  function isInFrontOfSnake(position) {
+    const currentDirection = getDirectionOffset();
+    const head = snake[0];
+    for (let i = 1; i <= 2; i++) { // Check next 2 positions ahead
+      const nextX = (head.x + currentDirection.dx * gridSize * i + canvas.width) % canvas.width;
+      const nextY = (head.y + currentDirection.dy * gridSize * i + canvas.height) % canvas.height;
+      if (position.x === nextX && position.y === nextY) {
+        return true;
+      }
+    }
+    return false;
   }
 
   function drawFood() {
@@ -285,7 +299,15 @@
   }
 
   function obstacleCollision(head) {
-    return obstacles.some((obstacle, index) => obstacleLife[index] > 50 && obstacle.x === head.x && obstacle.y === head.y);
+    return obstacles.some((obstacle, index) => {
+      // Only cause collision when obstacle is fully opaque (life between 150 and 50)
+      if (obstacleLife[index] <= 150 && obstacleLife[index] >= 50) {
+        if (obstacle.x === head.x && obstacle.y === head.y) {
+          return true;
+        }
+      }
+      return false;
+    });
   }
 
   function showGameOver() {
@@ -311,8 +333,9 @@
       x: Math.floor(Math.random() * 20) * gridSize,
       y: Math.floor(Math.random() * 20) * gridSize
     };
-    if (positionOccupied(newObstacle) || (newObstacle.x === food.x && newObstacle.y === food.y)) {
-      spawnObstacle();
+    // Check if the position is occupied or directly in front of the snake
+    if (positionOccupied(newObstacle) || isInFrontOfSnake(newObstacle)) {
+      spawnObstacle(); // Try again
     } else {
       obstacles.push(newObstacle);
       obstacleLife.push(200);
@@ -327,7 +350,14 @@
   }
 
   function drawObstacle(obstacle, life) {
-    let opacity = life > 150 ? (200 - life) / 50 : life / 50;
+    let opacity;
+    if (life > 150) {
+      opacity = (200 - life) / 50; // Fade in
+    } else if (life < 50) {
+      opacity = life / 50; // Fade out
+    } else {
+      opacity = 1; // Fully opaque
+    }
     ctx.fillStyle = `rgba(255, 255, 0, ${opacity})`;
     ctx.fillRect(obstacle.x, obstacle.y, gridSize, gridSize);
   }
