@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <!-- Prevent double-tap zoom -->
   <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0">
-  <title>Rainbow Worm Game with Invulnerability Power-Up</title>
+  <title>Rainbow Worm Game with Invulnerability Visuals</title>
   <style>
     body {
       margin: 0;
@@ -156,11 +156,40 @@
   }
 
   function drawSnake() {
+    const snakeLength = snake.length;
+    let invincibilityEnding = invulnerable && invulnerabilityTimer <= 2 * gameSpeed; // Last 2 seconds
+
     snake.forEach((part, index) => {
-      const colorStep = (steps + index * 15) % 360;
-      ctx.fillStyle = `hsl(${colorStep}, 100%, 50%)`;
+      if (invulnerable) {
+        if (invincibilityEnding) {
+          // Gradually return to rainbow colors
+          const transitionProgress = (2 * gameSpeed - invulnerabilityTimer) / (2 * gameSpeed);
+          const colorStep = (steps + index * 15) % 360;
+          const rainbowColor = `hsl(${colorStep}, 100%, 50%)`;
+          ctx.fillStyle = interpolateColor('#666666', rainbowColor, transitionProgress);
+        } else {
+          // Black and white striped pattern oscillating quickly
+          let isBlack = Math.floor((steps + index) / 2) % 2 === 0;
+          ctx.fillStyle = isBlack ? '#666666' : '#FFFFFF'; // 80% black is #666666
+        }
+      } else {
+        // Normal rainbow color
+        const colorStep = (steps + index * 15) % 360;
+        ctx.fillStyle = `hsl(${colorStep}, 100%, 50%)`;
+      }
       ctx.fillRect(part.x, part.y, gridSize, gridSize);
     });
+  }
+
+  function interpolateColor(color1, color2, factor) {
+    let result = '#';
+    for (let i = 1; i < 7; i += 2) {
+      const hex1 = parseInt(color1.substr(i, 2), 16);
+      const hex2 = parseInt(color2.substr(i, 2), 16);
+      const hex = Math.round(hex1 + (hex2 - hex1) * factor).toString(16).padStart(2, '0');
+      result += hex;
+    }
+    return result;
   }
 
   function moveSnake() {
