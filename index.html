@@ -1,12 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- [Head content remains the same] -->
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, user-scalable=no">
+  <!-- Prevent double-tap zoom -->
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0">
   <title>Rainbow Worm Game with Screen Wrapping</title>
   <style>
-    /* [Styles remain the same] */
+    body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      touch-action: none; /* Disable touch interactions */
+      -webkit-user-select: none; /* Prevent text selection */
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none; /* Disable callout actions */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    canvas {
+      background-color: #000;
+      display: block;
+    }
+    #score {
+      position: absolute;
+      top: 10px;
+      color: white;
+      font-size: 24px;
+    }
+    #gameOverOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 30px;
+      display: none;
+      z-index: 100;
+    }
+    #controls {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      display: flex;
+    }
+    .control-zone {
+      width: 50%;
+      height: 150px;
+    }
   </style>
 </head>
 <body>
@@ -227,7 +277,15 @@
     e.preventDefault();
     changeDirection('left');
   });
+  document.getElementById('leftZone').addEventListener('click', (e) => {
+    e.preventDefault();
+    changeDirection('left');
+  });
   document.getElementById('rightZone').addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    changeDirection('right');
+  });
+  document.getElementById('rightZone').addEventListener('click', (e) => {
     e.preventDefault();
     changeDirection('right');
   });
