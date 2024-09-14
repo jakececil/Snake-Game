@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- [Head content remains the same] -->
+  <!-- Meta and styles remain mostly the same -->
   <meta charset="UTF-8">
   <!-- Prevent double-tap zoom -->
   <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0">
-  <title>Rainbow Worm Game with Screen Wrapping</title>
+  <title>Rainbow Worm Game with Invulnerability Power-Up</title>
   <style>
     body {
       margin: 0;
@@ -24,7 +24,6 @@
       align-items: center;
     }
     #score {
-      /* Removed position absolute to keep it in the normal flow */
       margin-top: 10px;
       color: white;
       font-size: 24px;
@@ -32,7 +31,7 @@
     canvas {
       background-color: #000;
       display: block;
-      margin-top: 10px; /* Add margin to create space below the score */
+      margin-top: 10px;
     }
     #gameOverOverlay {
       position: fixed;
@@ -81,21 +80,24 @@
   </div>
 
 <script>
-  // [JavaScript code remains the same as the previous version]
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
   let gridSize, snake, food, direction, score, steps, countdown;
   let gameOverFlag = false;
   let obstacles = [];
   let obstacleLife = [];
+  let invulnerable = false;
+  let invulnerableJustActivated = false;
+  let powerUp = null;
+  let powerUpActive = false;
   const gameSpeed = 10;
   let gameLoop;
 
   function resizeCanvas() {
     const size = Math.min(window.innerWidth, window.innerHeight) * 0.9;
     gridSize = Math.floor(size / 20);
-    canvas.width = gridSize * 20;  // Ensure canvas width is multiple of gridSize
-    canvas.height = gridSize * 20; // Ensure canvas height is multiple of gridSize
+    canvas.width = gridSize * 20;
+    canvas.height = gridSize * 20;
   }
 
   function init() {
@@ -105,6 +107,10 @@
     steps = 0;
     countdown = 3;
     gameOverFlag = false;
+    invulnerable = false;
+    invulnerableJustActivated = false;
+    powerUp = null;
+    powerUpActive = false;
     snake = [{ x: 10 * gridSize, y: 10 * gridSize }];
     obstacles = [];
     obstacleLife = [];
@@ -130,6 +136,7 @@
     drawFood();
     drawSnake();
     handleObstacles();
+    handlePowerUp();
     steps++;
   }
 
@@ -156,23 +163,26 @@
 
   function moveSnake() {
     const currentDirection = getDirectionOffset();
-    let head = { 
-      x: snake[0].x + currentDirection.dx * gridSize, 
-      y: snake[0].y + currentDirection.dy * gridSize 
+    let head = {
+      x: snake[0].x + currentDirection.dx * gridSize,
+      y: snake[0].y + currentDirection.dy * gridSize
     };
 
     // Screen wrapping logic
     head.x = (head.x + canvas.width) % canvas.width;
     head.y = (head.y + canvas.height) % canvas.height;
 
-    if (snakeCollision(head)) {
-      gameOverFlag = true;
-    }
-
-    for (let i = 0; i < obstacles.length; i++) {
-      if (obstacleLife[i] > 50 && head.x === obstacles[i].x && head.y === obstacles[i].y) {
+    if (!invulnerable) {
+      if (snakeCollision(head)) {
         gameOverFlag = true;
       }
+      for (let i = 0; i < obstacles.length; i++) {
+        if (obstacleLife[i] > 50 && head.x === obstacles[i].x && head.y === obstacles[i].y) {
+          gameOverFlag = true;
+        }
+      }
+    } else {
+      invulnerableJustActivated = false;
     }
 
     snake.unshift(head);
@@ -182,8 +192,22 @@
       document.getElementById('score').textContent = `Score: ${score}`;
       createFood();
       maybeSpawnMoreObstacles();
+      maybeSpawnPowerUp();
     } else {
       snake.pop();
+    }
+
+    if (powerUp && head.x === powerUp.x && head.y === powerUp.y) {
+      invulnerable = true;
+      invulnerableJustActivated = true;
+      powerUp = null;
+    }
+
+    if (invulnerable && !invulnerableJustActivated) {
+      // Check if the snake is out of harm's way
+      if (!snakeCollision(head) && !obstacleCollision(head)) {
+        invulnerable = false;
+      }
     }
   }
 
@@ -201,17 +225,15 @@
       x: Math.floor(Math.random() * 20) * gridSize,
       y: Math.floor(Math.random() * 20) * gridSize
     };
-    if (foodOnSnake(food) || foodOnObstacles(food)) {
+    if (positionOccupied(food)) {
       createFood();
     }
   }
 
-  function foodOnSnake(position) {
-    return snake.some(part => part.x === position.x && part.y === position.y);
-  }
-
-  function foodOnObstacles(position) {
-    return obstacles.some(obstacle => obstacle.x === position.x && obstacle.y === position.y);
+  function positionOccupied(position) {
+    return snake.some(part => part.x === position.x && part.y === position.y) ||
+           obstacles.some(obstacle => obstacle.x === position.x && obstacle.y === position.y) ||
+           (powerUp && powerUp.x === position.x && powerUp.y === position.y);
   }
 
   function drawFood() {
@@ -220,7 +242,11 @@
   }
 
   function snakeCollision(head) {
-    return snake.some(part => part.x === head.x && part.y === head.y);
+    return snake.some((part, index) => index !== 0 && part.x === head.x && part.y === head.y);
+  }
+
+  function obstacleCollision(head) {
+    return obstacles.some((obstacle, index) => obstacleLife[index] > 50 && obstacle.x === head.x && obstacle.y === head.y);
   }
 
   function showGameOver() {
@@ -246,20 +272,12 @@
       x: Math.floor(Math.random() * 20) * gridSize,
       y: Math.floor(Math.random() * 20) * gridSize
     };
-    if (obstacleOnSnake(newObstacle) || obstacleOnObstacles(newObstacle) || (newObstacle.x === food.x && newObstacle.y === food.y)) {
+    if (positionOccupied(newObstacle) || (newObstacle.x === food.x && newObstacle.y === food.y)) {
       spawnObstacle();
     } else {
       obstacles.push(newObstacle);
       obstacleLife.push(200);
     }
-  }
-
-  function obstacleOnSnake(position) {
-    return snake.some(part => part.x === position.x && part.y === position.y);
-  }
-
-  function obstacleOnObstacles(position) {
-    return obstacles.some(obstacle => obstacle.x === position.x && obstacle.y === position.y);
   }
 
   function maybeSpawnMoreObstacles() {
@@ -273,6 +291,35 @@
     let opacity = life > 150 ? (200 - life) / 50 : life / 50;
     ctx.fillStyle = `rgba(255, 255, 0, ${opacity})`;
     ctx.fillRect(obstacle.x, obstacle.y, gridSize, gridSize);
+  }
+
+  function maybeSpawnPowerUp() {
+    if (score % 15 === 0 && !powerUpActive) {
+      spawnPowerUp();
+      powerUpActive = true;
+    }
+  }
+
+  function spawnPowerUp() {
+    powerUp = {
+      x: Math.floor(Math.random() * 20) * gridSize,
+      y: Math.floor(Math.random() * 20) * gridSize
+    };
+    if (positionOccupied(powerUp) || (powerUp.x === food.x && powerUp.y === food.y)) {
+      spawnPowerUp();
+    }
+  }
+
+  function handlePowerUp() {
+    if (powerUp) {
+      drawPowerUp();
+    }
+  }
+
+  function drawPowerUp() {
+    const colorStep = (steps * 20) % 360; // Flashing rainbow colors
+    ctx.fillStyle = `hsl(${colorStep}, 100%, 50%)`;
+    ctx.fillRect(powerUp.x, powerUp.y, gridSize, gridSize);
   }
 
   // Controls
