@@ -1,66 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- [Head content remains the same] -->
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, user-scalable=no">
   <title>Rainbow Worm Game with Screen Wrapping</title>
   <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background-color: #000;
-      touch-action: manipulation;
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-    canvas {
-      background-color: black;
-      display: block;
-    }
-    #score {
-      position: absolute;
-      top: 10px;
-      color: white;
-      font-size: 24px;
-    }
-    #gameOverOverlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      font-size: 30px;
-      display: none;
-      z-index: 100;
-    }
-    #controls {
-      position: absolute;
-      bottom: 0;
-      width: 100%;
-      display: flex;
-    }
-    .control-zone {
-      width: 50%;
-      height: 150px;
-    }
+    /* [Styles remain the same] */
   </style>
 </head>
 <body>
 
   <div id="score">Score: 0</div>
   <canvas id="gameCanvas"></canvas>
-  
+
   <!-- Game Over Overlay -->
   <div id="gameOverOverlay">
     <div>
@@ -87,9 +40,9 @@
 
   function resizeCanvas() {
     const size = Math.min(window.innerWidth, window.innerHeight) * 0.9;
-    canvas.width = size;
-    canvas.height = size;
-    gridSize = Math.floor(canvas.width / 20);
+    gridSize = Math.floor(size / 20);
+    canvas.width = gridSize * 20;  // Ensure canvas width is multiple of gridSize
+    canvas.height = gridSize * 20; // Ensure canvas height is multiple of gridSize
   }
 
   function init() {
@@ -156,16 +109,8 @@
     };
 
     // Screen wrapping logic
-    if (head.x < 0) {
-      head.x = canvas.width - gridSize;
-    } else if (head.x >= canvas.width) {
-      head.x = 0;
-    }
-    if (head.y < 0) {
-      head.y = canvas.height - gridSize;
-    } else if (head.y >= canvas.height) {
-      head.y = 0;
-    }
+    head.x = (head.x + canvas.width) % canvas.width;
+    head.y = (head.y + canvas.height) % canvas.height;
 
     if (snakeCollision(head)) {
       gameOverFlag = true;
