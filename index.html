@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Rainbow Worm Game</title>
+  <title>Rainbow Worm Game with Screen Wrapping</title>
   <style>
     body {
       margin: 0;
       padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
       background-color: #000;
       touch-action: manipulation;
       -webkit-touch-callout: none;
       -webkit-user-select: none;
       -ms-user-select: none;
       user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
     }
     canvas {
       background-color: black;
@@ -49,7 +49,6 @@
       bottom: 0;
       width: 100%;
       display: flex;
-      justify-content: space-between;
     }
     .control-zone {
       width: 50%;
@@ -62,6 +61,7 @@
   <div id="score">Score: 0</div>
   <canvas id="gameCanvas"></canvas>
   
+  <!-- Game Over Overlay -->
   <div id="gameOverOverlay">
     <div>
       <p id="gameOverText">Game Over! Score: 0</p>
@@ -69,6 +69,7 @@
     </div>
   </div>
 
+  <!-- Mobile Controls -->
   <div id="controls">
     <div class="control-zone" id="leftZone"></div>
     <div class="control-zone" id="rightZone"></div>
@@ -149,24 +150,40 @@
 
   function moveSnake() {
     const currentDirection = getDirectionOffset();
-    const head = { 
+    let head = { 
       x: snake[0].x + currentDirection.dx * gridSize, 
       y: snake[0].y + currentDirection.dy * gridSize 
     };
-    if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height || snakeCollision(head)) {
+
+    // Screen wrapping logic
+    if (head.x < 0) {
+      head.x = canvas.width - gridSize;
+    } else if (head.x >= canvas.width) {
+      head.x = 0;
+    }
+    if (head.y < 0) {
+      head.y = canvas.height - gridSize;
+    } else if (head.y >= canvas.height) {
+      head.y = 0;
+    }
+
+    if (snakeCollision(head)) {
       gameOverFlag = true;
     }
+
     for (let i = 0; i < obstacles.length; i++) {
       if (obstacleLife[i] > 50 && head.x === obstacles[i].x && head.y === obstacles[i].y) {
         gameOverFlag = true;
       }
     }
+
     snake.unshift(head);
+
     if (head.x === food.x && head.y === food.y) {
       score++;
       document.getElementById('score').textContent = `Score: ${score}`;
       createFood();
-      maybeSpawnMoreObstacles();  // Spawn more obstacles based on score
+      maybeSpawnMoreObstacles();
     } else {
       snake.pop();
     }
@@ -183,12 +200,20 @@
 
   function createFood() {
     food = {
-      x: Math.floor(Math.random() * 18 + 1) * gridSize,
-      y: Math.floor(Math.random() * 18 + 1) * gridSize
+      x: Math.floor(Math.random() * 20) * gridSize,
+      y: Math.floor(Math.random() * 20) * gridSize
     };
-    snake.forEach(part => {
-      if (part.x === food.x && part.y === food.y) createFood();
-    });
+    if (foodOnSnake(food) || foodOnObstacles(food)) {
+      createFood();
+    }
+  }
+
+  function foodOnSnake(position) {
+    return snake.some(part => part.x === position.x && part.y === position.y);
+  }
+
+  function foodOnObstacles(position) {
+    return obstacles.some(obstacle => obstacle.x === position.x && obstacle.y === position.y);
   }
 
   function drawFood() {
@@ -197,10 +222,7 @@
   }
 
   function snakeCollision(head) {
-    for (let i = 1; i < snake.length; i++) {
-      if (snake[i].x === head.x && snake[i].y === head.y) return true;
-    }
-    return false;
+    return snake.some(part => part.x === head.x && part.y === head.y);
   }
 
   function showGameOver() {
@@ -222,20 +244,29 @@
   }
 
   function spawnObstacle() {
-    let obstacle = {
-      x: Math.floor(Math.random() * 18 + 1) * gridSize,
-      y: Math.floor(Math.random() * 18 + 1) * gridSize
+    let newObstacle = {
+      x: Math.floor(Math.random() * 20) * gridSize,
+      y: Math.floor(Math.random() * 20) * gridSize
     };
-    snake.forEach(part => {
-      if (part.x === obstacle.x && part.y === obstacle.y) spawnObstacle();
-    });
-    obstacles.push(obstacle);
-    obstacleLife.push(200);
+    if (obstacleOnSnake(newObstacle) || obstacleOnObstacles(newObstacle) || (newObstacle.x === food.x && newObstacle.y === food.y)) {
+      spawnObstacle();
+    } else {
+      obstacles.push(newObstacle);
+      obstacleLife.push(200);
+    }
+  }
+
+  function obstacleOnSnake(position) {
+    return snake.some(part => part.x === position.x && part.y === position.y);
+  }
+
+  function obstacleOnObstacles(position) {
+    return obstacles.some(obstacle => obstacle.x === position.x && obstacle.y === position.y);
   }
 
   function maybeSpawnMoreObstacles() {
-    const obstacleCount = Math.floor(score / 10); // 1 obstacle for first 10, 2 for next, etc.
-    while (obstacles.length < obstacleCount) {
+    const desiredObstacleCount = Math.floor(score / 10) + 1;
+    while (obstacles.length < desiredObstacleCount) {
       spawnObstacle();
     }
   }
@@ -246,6 +277,7 @@
     ctx.fillRect(obstacle.x, obstacle.y, gridSize, gridSize);
   }
 
+  // Controls
   document.getElementById('leftZone').addEventListener('touchstart', (e) => {
     e.preventDefault();
     changeDirection('left');
